@@ -1,0 +1,45 @@
+SEED: 100
+MODEL:
+    ARCH: us_resnet18
+    INPUTSHAPE: [224, 224]
+    #PRETRAINED: /data/train_log_OFA/imagenet/r18/simclr_momenrtum_max_with_momentum_r18_imagenet_sandwich3T_asymmertric_mse_distill_feat_2_3_4_distill_mse_groupreg_A/checkpoint_width_1.0.pth.tar
+    #CHECKPOINT: /data/train_log_OFA/resnet18_linear_eval_imagenet_0.75_ours/checkpoint.pth.tar
+    #CHECKPOINT: /data/train_log_OFA/resnet18_linear_eval_imagenet_0.25_baseline/checkpoint.pth.tar
+    #PRETRAINED: /data/train_log_OFA/imagenet/r18/simsiam_momentum_us_r18_imagenet_sandwich3T_asymmertric_infoncev2_distill_new_head_200ep/checkpoint_width_0.25.pth.tar
+    #PRETRAINED: /data/train_log_OFA/imagenet/r18/byol_us_r18_imagenet_200ep_single_0.25_rerun/checkpoint.pth.tar
+    NUM_CLASSES: 1000
+    OFA:
+        CALIBRATE_BN: False
+        NUM_SAMPLE_TRAINING: 1
+        WIDTH_MULT: 0.25
+        SANDWICH: False
+TRAIN:
+    EPOCHS: 60
+    USE_DDP: True
+    LINEAR_EVAL: True
+    DATASET: imagenet
+    BATCH_SIZE: 256 # per-gpu
+    OPTIMIZER: 
+        NAME: lars
+        MOMENTUM: 0.9
+        WEIGHT_DECAY: 0.000 # 1e-5
+    LR_SCHEDULER:
+        WARMUP_EPOCHS: 0
+        WARMUP_LR: 0.0002 # 1e-4
+        BASE_LR: 0.8 # 1e-2
+        MIN_LR: 0.
+        TYPE: cosine
+        DECAY_RATE: 0.1
+        DECAY_MILESTONES : [30, 40]
+    LOSS: 
+        CRITERION:
+            NAME: CrossEntropy
+        #REGULARIZER:
+        #    NAME: PACT
+        LAMBDA: 0.0001
+    METER:
+        NAME: ACC
+        ACC:
+            TOPK: [1, 5]
+    RUNNER:
+        NAME: default

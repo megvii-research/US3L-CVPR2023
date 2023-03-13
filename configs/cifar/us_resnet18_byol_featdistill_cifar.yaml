@@ -1,0 +1,76 @@
+SEED: 100
+MODEL:
+    ARCH: us_cifar_resnet18
+    INPUTSHAPE: [32, 32]
+    OFA:
+        WIDTH_MULT_RANGE: [0.25, 1.0]
+        NUM_SAMPLE_TRAINING: 3
+        WIDTH_MULT: 1.0
+        SANDWICH: True
+        SAMPLE_SCHEDULER: A
+        MOMENTUM_UPDATE: False # False: only update momentum encoder once (max model forward pass)
+        DISTILL: True
+        DISTILL_CRITERION: CosineSimilarity # distill final representation
+        DISTILL_STUDENT_TEMP: 1.0
+        DISTILL_TEACHER_TEMP: 1.0
+        DISTILL_FEATURE: False
+        #DISTILL_FEATURE_NAME: ["layer4.1.bn2"]
+        DISTILL_FEATURE_NAME: ["layer2.1.bn2","layer3.1.bn2", "layer4.1.bn2"]
+        #DISTILL_FEATURE_NAME: ["layer1.1.bn2", "layer2.1.bn2","layer3.1.bn2", "layer4.1.bn2"]
+        #DISTILL_FEATURE_NAME: ["layer2.1.conv2","layer3.1.conv2", "layer4.1.conv2"]
+        DISTILL_FEATURE_CRITERION: MSELoss # distill intermediate features
+        DISTILL_FEATURE_LAMBDA: 1.0
+        #DISTILL_FEATURE_DIM: [512]
+        DISTILL_FEATURE_DIM: [128, 256, 512]
+        #DISTILL_FEATURE_DIM: [64, 128, 256, 512]
+        REGULARIZER: False
+        REGULARIZER_CRITERION: GroupReg
+        REGULARIZER_LAMBDA: 0.00025
+        REGULARIZER_DECAY_ALPHA: 0.05
+        REGULARIZER_DECAY_TYPE: linear
+        REGULARIZER_DECAY_BINS: 8
+        REGULARIZER_WARMUP_EPOCHS: 0
+        USE_SLIMMABLE: False
+        WIDTH_MULT_LIST: [1.0, 0.75, 0.5, 0.25]
+PRUNE:
+    ENABLE_PRUNE: False
+    TYPE: structed
+    GRANULARITY: channelwise
+    STRATEGY: l1norm
+    GLOBAL_FACTOR: 1.0
+TRAIN:
+    EPOCHS: 400
+    USE_DDP: True
+    SYNC_BN: False
+    DROP_LAST: True # set it to true for DINO
+    DATASET: cifar100
+    BATCH_SIZE: 128 # per-gpu
+    PRINT_FREQ: 10
+    OPTIMIZER:
+        NAME: sgd
+        MOMENTUM: 0.9
+        #WEIGHT_DECAY: 0.000 # 5e-4, set to zero if use custom regularizer
+        WEIGHT_DECAY: 0.0005 # 5e-4, set to zero if use custom regularizer
+    LR_SCHEDULER:
+        WARMUP_EPOCHS: 0
+        WARMUP_LR: 0.0002 # 1e-4
+        BASE_LR: 0.05 # 1e-2
+        MIN_LR: 0.
+        TYPE: cosine
+    LOSS:
+        CRITERION:
+            NAME: CosineSimilarity
+    METER:
+        NAME: average
+        ACC:
+            TOPK: [1, 5]
+    RUNNER:
+        NAME: ssl
+SSL:
+    TYPE: BYOL
+    SETTING:
+        DIM: 2048
+        HIDDEN_DIM: 2048
+        MOMENTUM: 0.99
+        NEW_DISTILL_HEAD: True
+

@@ -1,0 +1,79 @@
+SEED: 100
+MODEL:
+    ARCH: us_resnet50
+    #ARCH: cifar_resnet18
+    #ARCH: usprune_cifar_resnet18
+    #ARCH: usprune_v2_cifar_resnet18
+    #CHECKPOINT: /data/train_log_OFA/imagenet/r50/byol_us_r50_imagenet_sandwichOnce3T_mse_distill_A_200ep/checkpoint.pth.tar
+    INPUTSHAPE: [224, 224]
+    OFA:
+        WIDTH_MULT_RANGE: [0.25, 1.0] 
+        NUM_SAMPLE_TRAINING: 3
+        WIDTH_MULT: 1.0
+        SANDWICH: True
+        SAMPLE_SCHEDULER: A
+        MOMENTUM_UPDATE: False # False: only update momentum encoder once (max model forward pass)
+        DISTILL: True
+        DISTILL_CRITERION: CosineSimilarity # distill final representation
+        DISTILL_STUDENT_TEMP: 1.0
+        DISTILL_TEACHER_TEMP: 1.0
+        DISTILL_FEATURE: False
+        #DISTILL_FEATURE_NAME: ["layer4.1.bn2"]
+        DISTILL_FEATURE_NAME: ["layer2.3.bn2","layer3.5.bn2", "layer4.2.bn2"]
+        #DISTILL_FEATURE_NAME: ["layer1.2.bn3","layer2.3.bn3","layer3.5.bn3", "layer4.2.bn3"]
+        DISTILL_FEATURE_CRITERION: MSELoss # distill intermediate features
+        DISTILL_FEATURE_LAMBDA: 1.0
+        #DISTILL_FEATURE_DIM: [512]
+        DISTILL_FEATURE_DIM: [128, 256, 512]
+        #DISTILL_FEATURE_DIM: [256, 512, 1024, 2048]
+        USE_SLIMMABLE: False
+        WIDTH_MULT_LIST: [1.0, 0.75, 0.5, 0.25]
+        REGULARIZER: True
+        REGULARIZER_CRITERION: GroupReg
+        REGULARIZER_LAMBDA: 0.00005
+        REGULARIZER_DECAY_ALPHA: 0.05
+        REGULARIZER_DECAY_TYPE: linear
+        REGULARIZER_DECAY_BINS: 8
+        REGULARIZER_WARMUP_EPOCHS: 50
+        USE_SLIMMABLE: False
+        WIDTH_MULT_LIST: [1.0, 0.75, 0.5, 0.25]
+TRAIN:
+    EPOCHS: 100
+    USE_DDP: True
+    USE_AMP: True
+    SYNC_BN: False
+    DROP_LAST: False # set it to true for DINO
+    DATASET: imagenet
+    BATCH_SIZE: 60 # per-gpu 
+    PRINT_FREQ: 10
+    OPTIMIZER: 
+        NAME: sgd
+        MOMENTUM: 0.9
+        WEIGHT_DECAY: 0.0001 # 1e-5
+    LR_SCHEDULER:
+        WARMUP_EPOCHS: 0
+        WARMUP_LR: 0.0002 # 1e-4
+        BASE_LR: 0.05 # 1e-2
+        MIN_LR: 0.
+        TYPE: cosine
+    LOSS: 
+        CRITERION:
+            NAME: CosineSimilarity
+        #REGULARIZER:
+        #    NAME: PACT
+        LAMBDA: 0.0001
+    METER:
+        NAME: average
+        ACC:
+            TOPK: [1, 5]
+    RUNNER:
+        NAME: ssl
+SSL:
+    TYPE: BYOL
+    SETTING:
+        DIM: 2048
+        HIDDEN_DIM: 2048
+        T: 0.5
+        MOMENTUM: 0.99
+        NEW_DISTILL_HEAD: True
+

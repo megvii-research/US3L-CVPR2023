@@ -1,0 +1,123 @@
+SEED: 100
+MODEL:
+    #ARCH: cifar_resnet50
+    #ARCH: resnet50
+    ARCH: us_cifar_resnet50
+    #ARCH: us_cifar_resnet50_v2
+    INPUTSHAPE: [32, 32]
+    #INPUTSHAPE: [224, 224]
+    #PRETRAINED: /data/train_log_OFA/cifar100/r50/byol_r50_cifar100/checkpoint.pth.tar
+    #PRETRAINED: /data/train_log_OFA/cifar100/r50/byol_us_r50_cifar100_single_0.7/checkpoint.pth.tar
+    #PRETRAINED: /data/train_log_OFA/cifar100/r50/seed_us_r50_cifar100_1.0_teacher_byol_r50/checkpoint.pth.tar
+    #PRETRAINED: /data/train_log_OFA/cifar100/r50/byol_us_r50_cifar100_sandwichOnce_mse_distill_feat_2_3_4_distill_mse_A/checkpoint.pth.tar    
+    #PRETRAINED: /data/train_log_OFA/cifar100/r50/byol_us_r50_cifar100_sandwichOnce_mse_distill_feat_2_3_4_r18_key_distill_mse_A_800ep/checkpoint.pth.tar    
+    #PRETRAINED: /data/train_log_OFA/cifar100/r50/byol_us_r50_cifar100_sandwichOnce_mse_distill_A/checkpoint.pth.tar    
+    #PRETRAINED: /data/train_log_OFA/cifar100/r50/byol_us_r50_cifar100_sandwichOnce_mse_distill_feat_2.2_3.5_4.2_distill_mse_A/checkpoint.pth.tar    
+    #PRETRAINED: /data/train_log_OFA/cifar100/r50/byol_us_r50_cifar100_sandwichOnce3T_mse_distill_feat_2.2_3.5_4.2_distill_mse_A/checkpoint.pth.tar  
+    #PRETRAINED: /data/train_log_OFA/cifar100/r50/byol_us_r50_cifar100_sandwichOnce3T_mse_distill_feat_2.2_3.5_4.2_distill_mse_A_800ep/checkpoint.pth.tar      
+    #PRETRAINED: /data/train_log_OFA/cifar100/r50/byol_us_r50_cifar100_sandwichOnce3T_mse_distill_A_800ep/checkpoint.pth.tar      
+    #PRETRAINED: /data/train_log_OFA/cifar100/r50/byol_us_r50_cifar100_sandwichOnce3T_mse_distill_feat_2.2_3.5_4.2_distill_mse_groupreg_linear_lambda_2.5e-4_alpha_0.05_dynamic_200_bins_8_warmup_100_A/checkpoint.pth.tar      
+    PRETRAINED: /data/train_log_OFA/cifar100/r50/simclr_momentum_max_with_momentum_r50_cifar100_sandwich3T_asymmertric_mse_distill_feat_2_3_4_distill_mse_groupreg_A_800ep/checkpoint.pth.tar      
+    NUM_CLASSES: 100
+    OFA:
+        CALIBRATE_BN: True
+        NUM_SAMPLE_TRAINING: 1
+        WIDTH_MULT: 0.25
+        SANDWICH: False
+TRAIN:
+    EPOCHS: 100
+    USE_DDP: True
+    LINEAR_EVAL: True
+    DATASET: cifar100
+    BATCH_SIZE: 128 # per-gpu
+    OPTIMIZER: 
+        NAME: sgd
+        MOMENTUM: 0.9
+        WEIGHT_DECAY: 0.000 # 1e-5
+    LR_SCHEDULER:
+        WARMUP_EPOCHS: 0
+        WARMUP_LR: 0.0002 # 1e-4
+        BASE_LR: 30.0 # 1e-2
+        #BASE_LR: 0.1 
+        MIN_LR: 0.
+        #TYPE: cosine
+        TYPE: multiStep
+        DECAY_RATE: 0.1
+        DECAY_MILESTONES : [60, 80]
+    LOSS: 
+        CRITERION:
+            NAME: CrossEntropy
+        #REGULARIZER:
+        #    NAME: PACT
+        LAMBDA: 0.0001
+    METER:
+        NAME: ACC
+        ACC:
+            TOPK: [1, 5]
+    RUNNER:
+        NAME: default
+AUG:
+    TRAIN:
+        HORIZONTAL_FLIP:
+            PROB: 0.5
+        RANDOMRESIZEDCROP:
+            ENABLE: True
+            SCALE: (0.08, 1.0)
+            INTERPOLATION: bilinear
+        NORMLIZATION:
+            MEAN: [0.4914, 0.4822, 0.4465]
+            STD: [0.2023, 0.1994, 0.2010]
+    EVALUATION:
+        RESIZE: 
+            ENABLE: True
+            SIZE: [224, 224]
+        CENTERCROP: 
+            ENABLE: False
+        NORMLIZATION:
+            MEAN: [0.4914, 0.4822, 0.4465]
+            STD: [0.2023, 0.1994, 0.2010]
+QUANT:
+    TYPE: ptq
+    CALIBRATION:
+        TYPE: tar
+        PATH: calibrations/cifar10_train_1000.tar
+        SIZE: 1000
+        BATCHSIZE: 128
+    W:
+        BIT: 0
+        SYMMETRY: True
+        QUANTIZER: uniform
+        GRANULARITY : channelwise
+        OBSERVER_METHOD:
+            NAME: MINMAX
+    A:
+        BIT: 0
+        SYMMETRY: False
+        QUANTIZER: uniform
+        GRANULARITY : layerwise
+        OBSERVER_METHOD:
+            NAME: MINMAX
+    BIT_CONFIG: [{
+        "conv1": {"w": 8, "a": 8},
+        "layer1.0.downsample": {"a": 0},
+        "layer1.0.conv3": {"a": 0},
+        "layer1.1.conv3": {"a": 0},
+        "layer1.2.conv3": {"a": 0},
+        "layer2.0.conv3": {"a": 0},
+        "layer2.0.downsample": {"a": 0},
+        "layer2.1.conv3": {"a": 0},
+        "layer2.2.conv3": {"a": 0},
+        "layer2.3.conv3": {"a": 0},
+        "layer3.0.downsample": {"a": 0},
+        "layer3.0.conv3": {"a": 0},
+        "layer3.1.conv3": {"a": 0},
+        "layer3.2.conv3": {"a": 0},
+        "layer3.3.conv3": {"a": 0},
+        "layer3.4.conv3": {"a": 0},
+        "layer3.5.conv3": {"a": 0},
+        "layer4.0.downsample": {"a": 0},
+        "layer4.0.conv3": {"a": 0},
+        "layer4.1.conv3": {"a": 0},
+        "layer4.2.conv3": {"a": 0},
+        "fc": {"a": 0},
+    }]

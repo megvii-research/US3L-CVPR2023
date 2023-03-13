@@ -1,0 +1,60 @@
+SEED: 100
+MODEL:
+    ARCH: us_resnet50
+    INPUTSHAPE: [224, 224]
+    #CHECKPOINT: /data/train_log_OFA/imagenet/r18/byol_us_r18_imagenet_200ep_single_0.75_rerun/checkpoint.pth.tar
+    #CHECKPOINT: /data/train_log_OFA/imagenet/r18/byol_us_r18_imagenet_200ep_single_1.0/checkpoint.pth.tar
+    CHECKPOINT: /data/train_log_OFA/imagenet/r50/simsiam_us_r50_imagenet_100ep_single_0.5/checkpoint.pth.tar
+    OFA:
+        WIDTH_MULT_RANGE: [0.25, 1.0] 
+        NUM_SAMPLE_TRAINING: 1
+        WIDTH_MULT: 0.5
+        SANDWICH: True
+        SAMPLE_SCHEDULER: ""
+        MOMENTUM_UPDATE: False # False: only update momentum encoder once (max model forward pass)
+        USE_SLIMMABLE: False
+        WIDTH_MULT_LIST: [1.0, 0.75, 0.5, 0.25]
+PRUNE:
+    ENABLE_PRUNE: False
+    TYPE: structed
+    GRANULARITY: channelwise
+    STRATEGY: l1norm
+    GLOBAL_FACTOR: 1.0
+TRAIN:
+    EPOCHS: 100
+    USE_DDP: True
+    SYNC_BN: False
+    DROP_LAST: False # set it to true for DINO
+    DATASET: imagenet
+    BATCH_SIZE: 64 # per-gpu
+    PRINT_FREQ: 10
+    OPTIMIZER: 
+        NAME: sgd
+        MOMENTUM: 0.9
+        #WEIGHT_DECAY: 0.000 # 5e-4, set to zero if use custom regularizer
+        WEIGHT_DECAY: 0.0001 # 5e-4, set to zero if use custom regularizer
+    LR_SCHEDULER:
+        WARMUP_EPOCHS: 0
+        WARMUP_LR: 0.0002 # 1e-4
+        BASE_LR: 0.05 # 1e-2
+        MIN_LR: 0.
+        TYPE: cosine
+    LOSS: 
+        CRITERION:
+            NAME: CosineSimilarity
+        #REGULARIZER:
+        #    NAME: PACT
+        LAMBDA: 0.0001
+    METER:
+        NAME: average
+        ACC:
+            TOPK: [1, 5]
+    RUNNER:
+        NAME: ssl
+SSL:
+    TYPE: SimSiam
+    SETTING:
+        DIM: 2048
+        HIDDEN_DIM: 2048
+        MOMENTUM: 0.99
+

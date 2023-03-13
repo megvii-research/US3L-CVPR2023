@@ -1,0 +1,90 @@
+SEED: 100
+MODEL:
+    ARCH: us_cifar_mobilenetv2
+    INPUTSHAPE: [32, 32]
+    #CHECKPOINT: /data/train_log_OFA/cifar100/mbv2/simclr_momentum_max_with_momentum_mbv2_cifar100_sandwich3T_asymmertric_mse_distill_groupreg_A_800ep/checkpoint.pth.tar
+    OFA:
+        WIDTH_MULT_RANGE: [0.25, 1.0] 
+        NUM_SAMPLE_TRAINING: 3
+        WIDTH_MULT: 1.0
+        SANDWICH: True
+        SAMPLE_SCHEDULER: ""
+        MOMENTUM_UPDATE: False # False: only update momentum encoder once (max model forward pass)
+        DISTILL: True
+        DISTILL_CRITERION: CosineSimilarity
+        DISTILL_STUDENT_TEMP: 0.1
+        DISTILL_TEACHER_TEMP: 0.04
+        DISTILL_FEATURE: False
+        DISTILL_FEATURE_NAME: ["features.6.body.7", "features.10.body.7", "features.13.body.7", "features.16.body.7"]
+        DISTILL_FEATURE_CRITERION: MSELoss # distill intermediate features
+        DISTILL_FEATURE_LAMBDA: 1.0
+        #DISTILL_FEATURE_DIM: [512]
+        DISTILL_FEATURE_DIM: [32, 64, 96, 160]
+        USE_SLIMMABLE: False
+        WIDTH_MULT_LIST: [1.0, 0.75, 0.5, 0.25]
+        REGULARIZER: True
+        REGULARIZER_CRITERION: GroupReg
+        REGULARIZER_LAMBDA: 0.00005
+        REGULARIZER_DECAY_ALPHA: 0.05
+        REGULARIZER_DECAY_TYPE: linear
+        REGULARIZER_DECAY_BINS: 8
+        REGULARIZER_WARMUP_EPOCHS: 200
+        USE_SLIMMABLE: False
+        WIDTH_MULT_LIST: [1.0, 0.75, 0.5, 0.25]
+TRAIN:
+    EPOCHS: 400
+    USE_DDP: True
+    SYNC_BN: False
+    DATASET: cifar100
+    BATCH_SIZE: 128 # per-gpu
+    OPTIMIZER: 
+        NAME: sgd
+        MOMENTUM: 0.9
+        WEIGHT_DECAY: 0.0001 # 1e-5
+    LR_SCHEDULER:
+        WARMUP_EPOCHS: 0
+        WARMUP_LR: 0.0002 # 1e-4
+        BASE_LR: 0.5 # 1e-2
+        MIN_LR: 0.
+        TYPE: cosine
+    LOSS: 
+        CRITERION:
+            NAME: InfoNCEv2_distill
+        #REGULARIZER:
+        #    NAME: PACT
+        LAMBDA: 0.0001
+    METER:
+        NAME: average
+        ACC:
+            TOPK: [1, 5]
+    RUNNER:
+        NAME: ssl
+AUG:
+    TRAIN:
+        HORIZONTAL_FLIP:
+            PROB: 0.5
+        RANDOMRESIZEDCROP:
+            ENABLE: True
+            SCALE: (0.08, 1.0)
+            INTERPOLATION: bilinear
+        NORMLIZATION:
+            MEAN: [0.4914, 0.4822, 0.4465]
+            STD: [0.2023, 0.1994, 0.2010]
+    EVALUATION:
+        RESIZE: 
+            ENABLE: True
+            SIZE: [32, 32]
+        CENTERCROP: 
+            ENABLE: True
+        NORMLIZATION:
+            MEAN: [0.4914, 0.4822, 0.4465]
+            STD: [0.2023, 0.1994, 0.2010]
+SSL:
+    TYPE: SimCLR_Momentum
+    SETTING:
+        DIM: 256
+        HIDDEN_DIM: 2048
+        T: 0.5
+        MLP: TRUE
+        PREDICTOR: True
+        MOMENTUM: 0.99

@@ -1,0 +1,55 @@
+SEED: 100
+MODEL:
+    #ARCH: us_resnet18
+    #ARCH: us_resnet50
+    ARCH: us_mobilenetv2
+    INPUTSHAPE: [224, 224]
+    #PRETRAINED: /data/train_log_OFA/imagenet/byol_us_r18_imagenet_200ep_single_0.25/checkpoint.pth.tar
+    #PRETRAINED: /data/train_log_OFA/imagenet/r18/byol_us_r18_imagenet_200ep_single_1.0/checkpoint.pth.tar
+    #PRETRAINED: /data/train_log_OFA/imagenet/r18/simclr_momenrtum_max_with_momentum_r18_imagenet_sandwich3T_asymmertric_mse_distill_feat_2_3_4_distill_mse_groupreg_A/checkpoint.pth.tar
+    #PRETRAINED: /data/train_log_OFA/imagenet/r50/simclr_momenrtum_max_with_momentum_r50_imagenet_sandwich3T_asymmertric_mse_distill_feat_2_3_4_distill_mse_groupreg_A/checkpoint.pth.tar
+    PRETRAINED: /data/train_log_OFA/imagenet/mbv2/simclr_momentum_max_with_momentum_mbv2_imagenet_sandwich3T_asymmertric_mse_distill_groupreg_A/checkpoint.pth.tar
+    #PRETRAINED: /data/train_log_OFA/imagenet/r18/simsiam_momentum_us_r18_imagenet_sandwich3T_asymmertric_infoncev2_distill_new_head_200ep/checkpoint.pth.tar
+    #PRETRAINED: /data/train_log_OFA/imagenet/r50/byol_us_r50_imagenet_sandwichOnce3T_asymmertric_infoncev2_distill_new_head_A_200ep/checkpoint.pth.tar
+    #PRETRAINED: /data/train_log_OFA/imagenet/mbv2/simsiam_momentum_us_mbv2_imagenet_sandwich3T_asymmertric_infoncev2_distill_A_new_head_200ep/checkpoint.pth.tar
+    OFA:
+        WIDTH_MULT: 0.25
+TRAIN:
+    EPOCHS: 200
+    USE_DDP: True
+    SYNC_BN: False
+    DROP_LAST: False # set it to true for DINO
+    DATASET: imagenet
+    BATCH_SIZE: 128 # per-gpu, 64 for r50, 128 for r18
+    #BATCH_SIZE: 64 # per-gpu, 64 for r50, 128 for r18
+    PRINT_FREQ: 10
+    OPTIMIZER: 
+        NAME: sgd
+        MOMENTUM: 0.9
+        #WEIGHT_DECAY: 0.000 # 5e-4, set to zero if use custom regularizer
+        WEIGHT_DECAY: 0.0001 # 5e-4, set to zero if use custom regularizer
+    LR_SCHEDULER:
+        WARMUP_EPOCHS: 0
+        WARMUP_LR: 0.0002 # 1e-4
+        BASE_LR: 0.1 # 1e-2
+        MIN_LR: 0.
+        TYPE: cosine
+    LOSS: 
+        CRITERION:
+            NAME: CosineSimilarity
+        #REGULARIZER:
+        #    NAME: PACT
+        LAMBDA: 0.0001
+    METER:
+        NAME: average
+        ACC:
+            TOPK: [1, 5]
+    RUNNER:
+        NAME: ssl
+SSL:
+    TYPE: BYOL
+    SETTING:
+        DIM: 2048
+        HIDDEN_DIM: 2048
+        MOMENTUM: 0.99
+

@@ -1,0 +1,101 @@
+SEED: 100
+MODEL:
+    #ARCH: cifar_resnet18
+    #ARCH: us_resnet18
+    ARCH: us_resnet50
+    #INPUTSHAPE: [32, 32]
+    INPUTSHAPE: [224, 224] # imagenet transfer
+    #PRETRAINED:  checkpoints/resnet18.pth
+    #PRETRAINED: train_log/imagenet/simsiam_imagenet_r18_imagenet_baseline/checkpoint.pth.tar
+    #PRETRAINED: train_log/imagenet/RQbyol_randombit_4_16_add_float_r18_imagenet_baseline/checkpoint.pth.tar
+    #PRETRAINED: train_log/imagenet/RQbyol_randombit_w_2_8_f_4_8+floatloss_add_float_r18_imagenet_baseline/checkpoint.pth.tar
+    #PRETRAINED: train_log_NEW/resnet18_linear_eval_flowers_simsiam/checkpoint.pth.tar
+    #PRETRAINED: train_log_NEW/resnet18_linear_eval_flowers_simsiam/checkpoint.pth.tar
+    #CHECKPOINT: /data/train_log_NEW/resnet18_finetune_baseline_simsiam/checkpoint.pth.tar 
+    #CHECKPOINT: train_log_NEW/resnet18_finetune_baseline_wbound/checkpoint.pth.tar 
+    #CHECKPOINT: train_log_NEW/resnet18_finetune_baseline2/checkpoint.pth.tar 
+    #PRETRAINED: /data/train_log_OFA/imagenet/r18/simclr_momenrtum_max_with_momentum_r18_imagenet_sandwich3T_asymmertric_mse_distill_feat_2_3_4_distill_mse_groupreg_A/checkpoint_width_0.25.pth.tar
+    PRETRAINED: /data/train_log_OFA/imagenet/r50/simclr_momenrtum_max_with_momentum_r50_imagenet_sandwich3T_asymmertric_mse_distill_feat_2_3_4_distill_mse_groupreg_A/checkpoint_width_0.25.pth.tar
+    #PRETRAINED: /home/caoyunhao/projects/volcano-nn-experiments/lighter-faster-stronger/simsiam_official_100ep_checkpoint.pth.tar
+    #PRETRAINED: /data/train_log_OFA/imagenet/r18/byol_us_r18_imagenet_200ep_single_0.5_rerun/checkpoint.pth.tar
+    NUM_CLASSES: 102
+    OFA:
+        CALIBRATE_BN: False
+        NUM_SAMPLE_TRAINING: 1
+        WIDTH_MULT: 0.25
+        SANDWICH: False
+TRAIN:
+    EPOCHS: 100
+    USE_DDP: True
+    LINEAR_EVAL: False
+    WARMUP_FC: False
+    DATASET: flowers
+    BATCH_SIZE: 64 # per-gpu
+    OPTIMIZER: 
+        NAME: sgd
+        MOMENTUM: 0.9
+        WEIGHT_DECAY: 0.0001 # 1e-5
+    LR_SCHEDULER:
+        WARMUP_EPOCHS: 0
+        WARMUP_LR: 0.0002 # 1e-4
+        BASE_LR: 0.1 # 1e-2
+        #BASE_LR: 0.1 
+        FC_LR: 0.1
+        MIN_LR: 0.
+        #TYPE: cosine
+        TYPE: multiStep
+        DECAY_RATE: 0.1
+        DECAY_MILESTONES : [60, 80]
+    LOSS: 
+        CRITERION:
+            NAME: CrossEntropy
+        #REGULARIZER:
+        #    NAME: PACT
+        LAMBDA: 0.0001
+    METER:
+        NAME: ACC
+        ACC:
+            TOPK: [1, 5]
+    RUNNER:
+        NAME: default
+AUG:
+    TRAIN:
+        HORIZONTAL_FLIP:
+            PROB: 0.5
+        RANDOMRESIZEDCROP:
+            ENABLE: True
+            SCALE: (0.08, 1.0)
+            INTERPOLATION: bilinear
+        NORMLIZATION:
+            MEAN: [0.485, 0.456, 0.406]
+            STD: [0.229, 0.224, 0.225]
+    EVALUATION:
+        RESIZE: 
+            ENABLE: True
+            SIZE: [256, 256]
+        CENTERCROP: 
+            ENABLE: True
+        NORMLIZATION:
+            MEAN: [0.485, 0.456, 0.406]
+            STD: [0.229, 0.224, 0.225]
+QUANT:
+    TYPE: ptq
+    CALIBRATION:
+        TYPE: tar
+        PATH: calibrations/cifar10_train_1000.tar
+        SIZE: 1000
+        BATCHSIZE: 128
+    W:
+        BIT: 0
+        SYMMETRY: True
+        QUANTIZER: uniform
+        GRANULARITY : channelwise
+        OBSERVER_METHOD:
+            NAME: MINMAX
+    A:
+        BIT: 0
+        SYMMETRY: False
+        QUANTIZER: uniform
+        GRANULARITY : layerwise
+        OBSERVER_METHOD:
+            NAME: MINMAX
