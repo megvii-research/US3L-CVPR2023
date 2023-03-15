@@ -72,7 +72,7 @@ python -m torch.distributed.launch --nproc_per_node=4 --use_env main.py \
 To specify the pre-trained model path and evaluation channel-width, you need to mannually modify the .yaml file ([configs/cifar/resnet18_linear_eval_cifar.yaml](./configs/cifar/resnet18_linear_eval_cifar.yaml)). For instance, our pretrained model is ./checkpoint.pth.tar and we want to evaluate it with channel width at 0.25x, the modification in yaml file should look like
 ```python
 MODEL:
-    PRETRAINED: ./checkpoint.pth.tar # you need to change here
+    PRETRAINED: ./checkpoint.pth.tar # you need to specify checkpoint here
     OFA:
         CALIBRATE_BN: True
         NUM_SAMPLE_TRAINING: 1
